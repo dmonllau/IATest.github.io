@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grabación y Envío de Audio</title>
+</head>
+<body>
+    <button id="start">Iniciar Grabación</button>
+    <button id="stop" disabled>Detener Grabación</button>
+    <audio id="audio" controls></audio>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+
+        document.getElementById("start").addEventListener("click", async () => {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+
+            mediaRecorder.ondataavailable = event => {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+                const audioUrl = URL.createObjectURL(audioBlob);
+                document.getElementById("audio").src = audioUrl;
+
+                await sendAudioToWebhook(audioBlob);
+                audioChunks = [];
+            };
+
+            mediaRecorder.start();
+            document.getElementById("start").disabled = true;
+            document.getElementById("stop").disabled = false;
+        });
+
+        document.getElementById("stop").addEventListener("click", () => {
+            mediaRecorder.stop();
+            document.getElementById("start").disabled = false;
+            document.getElementById("stop").disabled = true;
+        });
+
+        async function sendAudioToWebhook(blob) {
+            const webhookUrl = "https://tu-webhook.com/api"; // Reemplaza con tu URL
+            const formData = new FormData();
+            formData.append("audio", blob, "grabacion.webm");
+
+            try {
+                const response = await fetch(webhookUrl, {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (response.ok) {
+                    console.log("Audio enviado correctamente");
+                } else {
+                    console.error("Error al enviar el audio");
+                }
+            } catch (error) {
+                console.error("Error en la solicitud:", error);
+            }
+        }
+    </script>
+</body>
+</html>
