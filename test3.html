@@ -39,7 +39,7 @@
     <script>
         let mediaRecorder;
         let audioChunks = [];
-        const WEBHOOK_URL = "https://hook.eu2.make.com/rm4tzwgeduntcwhab8e4791pxv5i8f4j"; // Reemplaza con la URL real
+        const WEBHOOK_URL = "https://hook.eu2.make.com/rm4tzwgeduntcwhab8e4791pxv5i8f4j";
 
         document.getElementById("recordBtn").addEventListener("mousedown", async () => {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -75,8 +75,10 @@
                     method: "POST",
                     body: formData,
                 });
-                const audioUrl = await response.text();
-                playAudio(audioUrl);
+                const data = await response.json();
+                if (data.audioUrl) {
+                    playAudio(data.audioUrl);
+                }
             } catch (error) {
                 console.error("Error enviando el audio:", error);
             }
